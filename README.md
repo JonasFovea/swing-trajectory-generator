@@ -19,7 +19,7 @@ Another crucial requirement for the calculation of these trajectories is the com
 It is therefore necessary to find a method that generates an swing trajectory in real time with the lowest possible computational effort and taking into account the requirements specified by the robot and additional own requirements. 
 
 ## Installation
-Run the following to install (when published on PyPi):
+Run the following to install:
 
 ```shell
 pip install swinggen
