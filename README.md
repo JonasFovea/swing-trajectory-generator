@@ -17,3 +17,31 @@ If the leg hits an obstacle during the swing phase, it must be possible to calcu
 Another crucial requirement for the calculation of these trajectories is the computing power needed for this purpose. On the one hand, it is absolutely necessary for such a mobile system that these calculations take place in real time, and on the other hand, it can happen that these calculations have to take place internally in the robot system, in which the cooling and computing power can be severely limited by the spatial conditions of the robot itself.
 
 It is therefore necessary to find a method that generates an swing trajectory in real time with the lowest possible computational effort and taking into account the requirements specified by the robot and additional own requirements. 
+
+## Installation
+Run the following to install:
+
+```shell
+pip install swinggen
+```
+
+### Development installation
+To install `swinggen` for development, along with tools you need to develop and run tests, run the following in your virtualenv:
+```shell
+$ pip install -e .[dev]
+```
+
+
+## Usage
+
+```python
+from swinggen import gen_splines, gen_splines_xy
+
+# Define three points in x, y respective to time and their velocities and accelerations
+P0 = [{"t": 0, "pos": 0, "vel": -5, "acc": 0.25}, {"t": 0, "pos": 0, "vel": 0.5, "acc": 0.1}]
+P1 = [{"t": 0.5, "pos": 1, "vel": 20, "acc": 0}, {"t": 0.5, "pos": 1, "vel": 0, "acc": 0}]
+P2 = [{"t": 1.0, "pos": 2, "vel": -5, "acc": -0.25}, {"t": 1, "pos": 0, "vel": -0.25, "acc": 0.1}]
+
+# generate the spline lambda functions contained in a 2D-List: [[x-splines],[y-splines]]
+splines_xy = gen_splines_xy([P0, P1, P2])
+```
