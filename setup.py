@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='swinggen',
-    version='0.0.1',
+    version='0.0.2',
     description='',
     py_modules=['swinggen'],
     package_dir={'': 'src'},
@@ -14,6 +14,7 @@ setup(
                  "Programming Language :: Python :: 3.7",
                  "Programming Language :: Python :: 3.8",
                  "Programming Language :: Python :: 3.9",
+                 "Programming Language :: Python :: 3.10",
                  "Operating System :: OS Independent"],
     license_files=['LICENSE.txt',],
     long_description=long_description,

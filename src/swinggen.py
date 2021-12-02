@@ -1,3 +1,5 @@
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -8,9 +10,9 @@ def gen_splines(point_params: list, verbose=False) -> list:
     if verbose:
         print(f"Generating splines for points {point_params}")
 
+    # tstart = time.perf_counter()
     splines = []
     for i, _ in enumerate(point_params[:-1]):
-        # print(f"Loop i: {i}")
         t = [point_params[i + j]["t"] for j in (0, 1)]
 
         pos = [point_params[i + j]["pos"] for j in (0, 1)]
@@ -36,18 +38,22 @@ def gen_splines(point_params: list, verbose=False) -> list:
             3] * t ** 2 + koeffs[
                                               4] * t + koeffs[5]
         splines.append(spline)
-
+    # tend = time.perf_counter()
+    # print(f"Time passed while calculating splines for one dimension: {tend-tstart}")
     return splines
 
 
 def gen_splines_xy(point_param_lists: list) -> list:
+    # tstart = time.perf_counter_ns()
     points_x = [p[0] for p in point_param_lists]
     points_y = [p[1] for p in point_param_lists]
+    # tend = time.perf_counter_ns()
+    # print(f"Time Passed for calculationd 2D splines: {tend-tstart}ns")
 
     return [gen_splines(points_x), gen_splines(points_y)]
 
 
-def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01):
+def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplot_axs=None):
     splines_xy = splines_xy_list
     if not splines_xy_list:
         splines_xy = gen_splines_xy(point_param_lists)
@@ -57,11 +63,14 @@ def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01):
     x_pts = [list(map(s, t)) for s, t in zip(splines_xy[0], t)]
     y_pts = [list(map(s, t)) for s, t in zip(splines_xy[1], t)]
 
-
-    fig, axs = plt.subplots(1, 3)
+    if pyplot_axs is None or pyplot_axs.shape != (1, 3):
+        fig, axs = plt.subplots(1, 3)
+    else:
+        axs = pyplot_axs
 
     axs[0].set_xlabel("t")
     axs[0].set_ylabel("x")
+    axs[0].set_title("Splines in x-direction over time")
     # splines x
     for ts, s in zip(t, x_pts):
         axs[0].plot(ts, s)
@@ -71,6 +80,7 @@ def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01):
 
     axs[1].set_xlabel("t")
     axs[1].set_ylabel("y")
+    axs[1].set_title("Splines in y-direction over time")
     # splines x
     for ts, s in zip(t, y_pts):
         axs[1].plot(ts, s)
@@ -80,6 +90,7 @@ def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01):
 
     axs[2].set_xlabel("x")
     axs[2].set_ylabel("y")
+    axs[2].set_title("Combined Splines in xy-plane")
     for xs, ys in zip(x_pts, y_pts):
         axs[2].plot(xs, ys)
     for point in point_param_lists:
@@ -88,45 +99,11 @@ def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01):
     plt.show()
 
 
+def get_example_point_data() -> list:
+    return [[{"t": 0, "pos": 0, "vel": -50, "acc": 10}, {"t": 0, "pos": 0, "vel": 0.1, "acc": 0.1}],
+            [{"t": 0.5, "pos": 1, "vel": 20, "acc": 0}, {"t": 0.5, "pos": 1, "vel": 0, "acc": -2}],
+            [{"t": 1.0, "pos": 2, "vel": -15, "acc": -0.25}, {"t": 1, "pos": 0, "vel": -0.25, "acc": 0.1}]]
+
+
 if __name__ == "__main__":
-    P0 = [{"t": 0, "pos": 0, "vel": -5, "acc": 0.25}, {"t": 0, "pos": 0, "vel": 0.5, "acc": 0.1}]
-    P1 = [{"t": 0.5, "pos": 1, "vel": 20, "acc": 0}, {"t": 0.5, "pos": 1, "vel": 0, "acc": 0}]
-    P2 = [{"t": 1.0, "pos": 2, "vel": -5, "acc": -0.25}, {"t": 1, "pos": 0, "vel": -0.25, "acc": 0.1}]
-
-    plot_splines([P0, P1, P2])
-
-    # splines_xy = gen_splines_xy([P0, P1, P2])
-    #
-    # step = 0.01
-    # t0 = np.arange(0, 0.5 + step, step)
-    # t1 = np.arange(0.5, 1 + step, step)
-    #
-    # x0_pts = list(map(splines_xy[0][0], t0))
-    # y0_pts = list(map(splines_xy[1][0], t0))
-    #
-    # x1_pts = list(map(splines_xy[0][1], t1))
-    # y1_pts = list(map(splines_xy[1][1], t1))
-    #
-    # fig, axs = plt.subplots(1, 3)
-    #
-    # axs[0].set_xlabel("t")
-    # axs[0].set_ylabel("x")
-    # axs[0].plot(t0, x0_pts, "r")
-    # axs[0].plot(t1, x1_pts, "b")
-    # axs[0].plot(P0[0]["t"], P0[0]["pos"], "xk", P1[0]["t"], P1[0]["pos"], "xk", P2[0]["t"], P2[0]["pos"], "xk")
-    #
-    # axs[1].set_xlabel("t")
-    # axs[1].set_ylabel("y")
-    # axs[1].plot(t0, y0_pts, "r")
-    # axs[1].plot(t1, y1_pts, "b")
-    # axs[1].plot(P0[1]["t"], P0[1]["pos"], "xk", P1[1]["t"], P1[1]["pos"], "xk", P2[1]["t"], P2[1]["pos"], "xk")
-    #
-    # axs[2].set_xlabel("x")
-    # axs[2].set_ylabel("y")
-    #
-    # axs[2].plot(x0_pts, y0_pts, "r")
-    # axs[2].plot(x1_pts, y1_pts, "b")
-    # axs[2].plot(P0[0]["pos"], P0[1]["pos"], "xk")
-    # axs[2].plot(P1[0]["pos"], P1[1]["pos"], "xk")
-    # axs[2].plot(P2[0]["pos"], P2[1]["pos"], "xk")
-    # plt.show()
+    plot_splines(get_example_point_data())
