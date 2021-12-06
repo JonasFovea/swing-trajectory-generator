@@ -35,13 +35,13 @@ $ pip install -e .[dev]
 ## Usage
 
 ```python
-from swinggen import gen_splines, gen_splines_xy
+# import the package
+from swinggen import *
 
-# Define three points in x, y respective to time and their velocities and accelerations
-P0 = [{"t": 0, "pos": 0, "vel": -5, "acc": 0.25}, {"t": 0, "pos": 0, "vel": 0.5, "acc": 0.1}]
-P1 = [{"t": 0.5, "pos": 1, "vel": 20, "acc": 0}, {"t": 0.5, "pos": 1, "vel": 0, "acc": 0}]
-P2 = [{"t": 1.0, "pos": 2, "vel": -5, "acc": -0.25}, {"t": 1, "pos": 0, "vel": -0.25, "acc": 0.1}]
-
-# generate the spline lambda functions contained in a 2D-List: [[x-splines],[y-splines]]
-splines_xy = gen_splines_xy([P0, P1, P2])
+# generate example points
+ex_points = get_example_point_data()
+# plot splines from points (uses default 3rd order splines)
+plot_splines(ex_points)
+# plot splines by generating them as 5th order polynomials
+plot_splines(ex_points, gen_splines_xy(ex_points, spline_generator=gen_spline_5))
 ```
