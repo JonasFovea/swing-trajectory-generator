@@ -3,6 +3,8 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
+import tkinter as tk
+
 
 class Spline:
     def __init__(self, coefficient_lists, domain_lists):
@@ -23,6 +25,237 @@ class Spline:
     @staticmethod
     def __eval(val, coeffs):
         return sum([c * val ** i for i, c in enumerate(coeffs)])
+
+
+class AdjusterGui:
+    def __init__(self, point_param_lists: list = None):
+
+
+        # Main Window configuration
+        self.root = tk.Tk()
+        self.root.configure(bg="white")
+        self.root.title("Swinggen Adjuster")
+        self.root.geometry("450x600")
+        self.root.resizable(width=False, height=False)
+
+        self.__max_pos = 5
+        self.__min_pos = -self.__max_pos
+        self.__pos_step_size = 0.2
+        self.__max_vel = 100
+        self.__min_vel = -self.__max_vel
+        self.__vel_step_size = 0.2
+        self.__max_acc = 100
+        self.__min_acc = -self.__max_acc
+        self.__acc_step_size = 0.2
+
+        self.plot_step_size = 0.01
+
+        self.points = get_example_point_data()
+        self. generator_func = gen_spline_5
+
+        self.fig, self.axs = plt.subplots(1, 3)
+        plot_splines(self.points, gen_splines_xy(self.points, spline_generator=self.generator_func), pyplot_axs=self.axs,
+                     update=True, step=self.plot_step_size)
+        self.fig.show()
+
+        self.__init_widgets()
+
+        # Start Tkinter mainloop
+        self.root.mainloop()
+
+    def __init_widgets(self):
+        # ==== Content configuration ====
+
+        self.order_bool = tk.BooleanVar()
+        self.order_sel_check = tk.Checkbutton(self.root, text="5th order\nsplines", bg="white", variable=self.order_bool, command=self.update_order, bd=0, highlightthickness=0)
+        self.order_sel_check.grid(column=0, row=1)
+        self.order_bool.set(True)
+
+        point_off = 0 * 5
+        self.p1_title = tk.Label(self.root, text="Adjustments for Point 1", bg="orange")
+        self.p1_title.grid(columnspan=3, column=1, row=point_off + 0, padx=5, pady=5)
+        self.p1_x_dir = tk.Label(self.root, text="x-Direction", bg="white")
+        self.p1_x_dir.grid(column=1, row=point_off + 1, padx=5, pady=5)
+        self.p1_y_dir = tk.Label(self.root, text="y-Direction", bg="white")
+        self.p1_y_dir.grid(column=2, row=point_off + 1, padx=5, pady=5)
+
+        self.p1_pos_label = tk.Label(self.root, text="Position", bg="white")
+        self.p1_pos_label.grid(column=0, row=point_off + 2, sticky=tk.SW, padx=5, pady=5)
+        self.p1_pos_x_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p1_pos_x_scale.set(self.points[0][0]["pos"])
+        self.p1_pos_x_scale.grid(column=1, row=point_off + 2, padx=5, pady=5)
+        self.p1_pos_y_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p1_pos_y_scale.set(self.points[0][1]["pos"])
+        self.p1_pos_y_scale.grid(column=2, row=point_off + 2, padx=5, pady=5)
+
+        self.p1_vel_label = tk.Label(self.root, text="Velocity", bg="white")
+        self.p1_vel_label.grid(column=0, row=point_off + 3, sticky=tk.SW, padx=5, pady=5)
+        self.p1_vel_x_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p1_vel_x_scale.set(self.points[0][0]["vel"])
+        self.p1_vel_x_scale.grid(column=1, row=point_off + 3, padx=5, pady=5)
+        self.p1_vel_y_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p1_vel_y_scale.set(self.points[0][1]["vel"])
+        self.p1_vel_y_scale.grid(column=2, row=point_off + 3, padx=5, pady=5)
+
+        self.p1_acc_label = tk.Label(self.root, text="Acceleration", bg="white")
+        self.p1_acc_label.grid(column=0, row=point_off + 4, sticky=tk.SW, padx=5, pady=5)
+        self.p1_acc_x_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p1_acc_x_scale.set(self.points[0][0]["acc"])
+        self.p1_acc_x_scale.grid(column=1, row=point_off + 4, padx=5, pady=5)
+        self.p1_acc_y_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p1_acc_y_scale.set(self.points[0][1]["acc"])
+        self.p1_acc_y_scale.grid(column=2, row=point_off + 4, padx=5, pady=5)
+
+        point_off = 1 * 5
+        self.p2_title = tk.Label(self.root, text="Adjustments for Point 2", bg="lightblue")
+        self.p2_title.grid(columnspan=3, column=1, row=point_off + 0, padx=5, pady=5)
+        self.p2_x_dir = tk.Label(self.root, text="x-Direction", bg="white")
+        self.p2_x_dir.grid(column=1, row=point_off + 1, padx=5, pady=5)
+        self.p2_y_dir = tk.Label(self.root, text="y-Direction", bg="white")
+        self.p2_y_dir.grid(column=2, row=point_off + 1, padx=5, pady=5)
+
+        self.p2_pos_label = tk.Label(self.root, text="Position", bg="white")
+        self.p2_pos_label.grid(column=0, row=point_off + 2, sticky=tk.SW, padx=5, pady=5)
+        self.p2_pos_x_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p2_pos_x_scale.set(self.points[1][0]["pos"])
+        self.p2_pos_x_scale.grid(column=1, row=point_off + 2, padx=5, pady=5)
+        self.p2_pos_y_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p2_pos_y_scale.set(self.points[1][1]["pos"])
+        self.p2_pos_y_scale.grid(column=2, row=point_off + 2, padx=5, pady=5)
+        self.p2_vel_label = tk.Label(self.root, text="Velocity", bg="white")
+        self.p2_vel_label.grid(column=0, row=point_off + 3, sticky=tk.SW, padx=5, pady=5)
+        self.p2_vel_x_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p2_vel_x_scale.set(self.points[1][0]["vel"])
+        self.p2_vel_x_scale.grid(column=1, row=point_off + 3, padx=5, pady=5)
+        self.p2_vel_y_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p2_vel_y_scale.set(self.points[1][1]["vel"])
+        self.p2_vel_y_scale.grid(column=2, row=point_off + 3, padx=5, pady=5)
+        self.p2_acc_label = tk.Label(self.root, text="Acceleration", bg="white")
+        self.p2_acc_label.grid(column=0, row=point_off + 4, sticky=tk.SW, padx=5, pady=5)
+        self.p2_acc_x_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p2_acc_x_scale.set(self.points[1][0]["acc"])
+        self.p2_acc_x_scale.grid(column=1, row=point_off + 4, padx=5, pady=5)
+        self.p2_acc_y_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p2_acc_y_scale.set(self.points[1][1]["acc"])
+        self.p2_acc_y_scale.grid(column=2, row=point_off + 4, padx=5, pady=5)
+
+        point_off = 2 * 5
+        self.p3_title = tk.Label(self.root, text="Adjustments for Point 3", bg="lightgreen")
+        self.p3_title.grid(columnspan=3, column=1, row=point_off + 0, padx=5, pady=5)
+        self.p3_x_dir = tk.Label(self.root, text="x-Direction", bg="white")
+        self.p3_x_dir.grid(column=1, row=point_off + 1, padx=5, pady=5)
+        self.p3_y_dir = tk.Label(self.root, text="y-Direction", bg="white")
+        self.p3_y_dir.grid(column=2, row=point_off + 1, padx=5, pady=5)
+
+        self.p3_pos_label = tk.Label(self.root, text="Position", bg="white")
+        self.p3_pos_label.grid(column=0, row=point_off + 2, sticky=tk.SW, padx=5, pady=5)
+        self.p3_pos_x_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p3_pos_x_scale.set(self.points[2][0]["pos"])
+        self.p3_pos_x_scale.grid(column=1, row=point_off + 2, padx=5, pady=5)
+        self.p3_pos_y_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p3_pos_y_scale.set(self.points[2][1]["pos"])
+        self.p3_pos_y_scale.grid(column=2, row=point_off + 2, padx=5, pady=5)
+        self.p3_vel_label = tk.Label(self.root, text="Velocity", bg="white")
+        self.p3_vel_label.grid(column=0, row=point_off + 3, sticky=tk.SW, padx=5, pady=5)
+        self.p3_vel_x_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p3_vel_x_scale.set(self.points[2][0]["vel"])
+        self.p3_vel_x_scale.grid(column=1, row=point_off + 3, padx=5, pady=5)
+        self.p3_vel_y_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p3_vel_y_scale.set(self.points[2][1]["vel"])
+        self.p3_vel_y_scale.grid(column=2, row=point_off + 3, padx=5, pady=5)
+        self.p3_acc_label = tk.Label(self.root, text="Acceleration", bg="white")
+        self.p3_acc_label.grid(column=0, row=point_off + 4, sticky=tk.SW, padx=5, pady=5)
+        self.p3_acc_x_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p3_acc_x_scale.set(self.points[2][0]["acc"])
+        self.p3_acc_x_scale.grid(column=1, row=point_off + 4, padx=5, pady=5)
+        self.p3_acc_y_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+        self.p3_acc_y_scale.set(self.points[2][1]["acc"])
+        self.p3_acc_y_scale.grid(column=2, row=point_off + 4, padx=5, pady=5)
+
+    def get_pos_x_val(self, pt_nr):
+        if pt_nr == 0:
+            return self.p1_pos_x_scale.get()
+        elif pt_nr == 1:
+            return self.p2_pos_x_scale.get()
+        else:
+            return self.p3_pos_x_scale.get()
+
+    def get_pos_y_val(self, pt_nr):
+        if pt_nr == 0:
+            return self.p1_pos_y_scale.get()
+        if pt_nr == 1:
+            return self.p2_pos_y_scale.get()
+        else:
+            return self.p3_pos_y_scale.get()
+
+    def get_vel_x_val(self, pt_nr):
+        if pt_nr == 0:
+            return self.p1_vel_x_scale.get()
+        if pt_nr == 1:
+            return self.p2_vel_x_scale.get()
+        else:
+            return self.p3_vel_x_scale.get()
+
+    def get_vel_y_val(self, pt_nr):
+        if pt_nr == 0:
+            return self.p1_vel_y_scale.get()
+        if pt_nr == 1:
+            return self.p2_vel_y_scale.get()
+        else:
+            return self.p3_vel_y_scale.get()
+
+    def get_acc_x_val(self, pt_nr):
+        if pt_nr == 0:
+            return self.p1_acc_x_scale.get()
+        if pt_nr == 1:
+            return self.p2_acc_x_scale.get()
+        else:
+            return self.p3_acc_x_scale.get()
+
+    def get_acc_y_val(self, pt_nr):
+        if pt_nr == 0:
+            return self.p1_acc_y_scale.get()
+        if pt_nr == 1:
+            return self.p2_acc_y_scale.get()
+        else:
+            return self.p3_acc_y_scale.get()
+
+    def update_order(self):
+        self.generator_func = gen_spline_5 if self.order_bool.get() else gen_spline_3
+        # print(f"Update order: {self.order_bool.get()}")
+        self.update_points(None)
+
+    def update_points(self, _):
+        for i, pt in enumerate(self.points):
+            pt[0]["pos"] = self.get_pos_x_val(i)
+            pt[0]["vel"] = self.get_vel_x_val(i)
+            pt[0]["acc"] = self.get_acc_x_val(i)
+            pt[1]["pos"] = self.get_pos_y_val(i)
+            pt[1]["vel"] = self.get_vel_y_val(i)
+            pt[1]["acc"] = self.get_acc_y_val(i)
+            # print(pt)
+        # print(self.points)
+        plot_splines(self.points, gen_splines_xy(self.points, spline_generator=self.generator_func), pyplot_axs=self.axs,
+                     update=True, step=self.plot_step_size)
+        self.fig.show()
 
 
 # =================== END CLASSES     ===============================================
@@ -117,7 +350,27 @@ def gen_splines_xy(point_param_lists: list, spline_generator=gen_spline_3) -> li
     return [spline_generator(points_x), spline_generator(points_y)]
 
 
-def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplot_axs=None):
+def setup_plot(axs):
+    axs[0].set_aspect(aspect="equal", adjustable='datalim')
+
+    axs[0].set_xlabel("t")
+    axs[0].set_ylabel("x")
+    axs[0].set_title("Splines in x-direction over time")
+
+    axs[1].set_aspect(aspect="equal", adjustable='datalim')
+
+    axs[1].set_xlabel("t")
+    axs[1].set_ylabel("y")
+    axs[1].set_title("Splines in y-direction over time")
+
+    xs[2].set_aspect(aspect="equal", adjustable='datalim')
+
+    axs[2].set_xlabel("x")
+    axs[2].set_ylabel("y")
+    axs[2].set_title("Combined Splines in xy-plane")
+
+
+def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplot_axs=None, update=False):
     splines_xy = splines_xy_list
     if not splines_xy_list:
         splines_xy = gen_splines_xy(point_param_lists)
@@ -127,16 +380,18 @@ def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplo
     x_pts = [list(map(splines_xy[0], t_)) for t_ in t]
     y_pts = [list(map(splines_xy[1], t_)) for t_ in t]
 
-    if pyplot_axs is None or pyplot_axs.shape != (1, 3):
+    if pyplot_axs is None:  # or pyplot_axs.shape != (1, 3):
         fig, axs = plt.subplots(1, 3)
     else:
         axs = pyplot_axs
-
+    if update:
+        axs[0].clear()
     axs[0].set_aspect(aspect="equal", adjustable='datalim')
 
     axs[0].set_xlabel("t")
     axs[0].set_ylabel("x")
     axs[0].set_title("Splines in x-direction over time")
+
     # splines x
     for ts, s in zip(t, x_pts):
         axs[0].plot(ts, s)
@@ -144,11 +399,14 @@ def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplo
     for point in point_param_lists:
         axs[0].plot(point[0]["t"], point[0]["pos"], "xk")
 
+    if update:
+        axs[1].clear()
     axs[1].set_aspect(aspect="equal", adjustable='datalim')
-
     axs[1].set_xlabel("t")
     axs[1].set_ylabel("y")
     axs[1].set_title("Splines in y-direction over time")
+
+
     # splines x
     for ts, s in zip(t, y_pts):
         axs[1].plot(ts, s)
@@ -156,17 +414,20 @@ def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplo
     for point in point_param_lists:
         axs[1].plot(point[1]["t"], point[1]["pos"], "xk")
 
+    if update:
+        axs[2].clear()
     axs[2].set_aspect(aspect="equal", adjustable='datalim')
-
     axs[2].set_xlabel("x")
     axs[2].set_ylabel("y")
     axs[2].set_title("Combined Splines in xy-plane")
+
+
     for xs, ys in zip(x_pts, y_pts):
         axs[2].plot(xs, ys)
     for point in point_param_lists:
         axs[2].plot(point[0]["pos"], point[1]["pos"], "xk")
 
-    plt.show()
+    # plt.pause(0.05)
 
 
 def get_example_point_data() -> list:
@@ -176,9 +437,12 @@ def get_example_point_data() -> list:
 
 
 if __name__ == "__main__":
-    ex_points = get_example_point_data()
-    plot_splines(ex_points)
-    plot_splines(ex_points, gen_splines_xy(ex_points, spline_generator=gen_spline_5))
+    # ex_points = get_example_point_data()
+    # fig, axs = plt.subplots(1, 3)
+    # plot_splines(ex_points, pyplot_axs=axs)
+    # plot_splines(ex_points, gen_splines_xy(ex_points, spline_generator=gen_spline_5), pyplot_axs=axs)
+    # plt.show()
+    win_tk = AdjusterGui()
 
 # TODO
 # Make scaling on axes the same
