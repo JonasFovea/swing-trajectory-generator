@@ -1,4 +1,5 @@
 import time
+import copy
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,33 +31,46 @@ class Spline:
 class AdjusterGui:
     def __init__(self, point_param_lists: list = None):
 
-
         # Main Window configuration
         self.root = tk.Tk()
         self.root.configure(bg="white")
         self.root.title("Swinggen Adjuster")
-        self.root.geometry("450x600")
+        self.root.geometry("450x700")
         self.root.resizable(width=False, height=False)
 
         self.__max_pos = 5
         self.__min_pos = -self.__max_pos
         self.__pos_step_size = 0.2
+
         self.__max_vel = 100
         self.__min_vel = -self.__max_vel
         self.__vel_step_size = 0.2
+
         self.__max_acc = 100
         self.__min_acc = -self.__max_acc
         self.__acc_step_size = 0.2
 
+        self.show_collision = False
+        self.__max_collision_offset = 2
+        self.__min_collision_offset = 0
+        self.__collision_step_size = 0.2
+        self.__collision_offset = 1
+
         self.plot_step_size = 0.01
 
         self.points = get_example_point_data()
-        self. generator_func = gen_spline_5
+        self.collision_points = copy.deepcopy(self.points)
+        self.collision_points[1][1]["pos"] += 1
 
+        self.generator_func = gen_spline_5
+
+        plt.ion()
         self.fig, self.axs = plt.subplots(1, 3)
-        plot_splines(self.points, gen_splines_xy(self.points, spline_generator=self.generator_func), pyplot_axs=self.axs,
-                     update=True, step=self.plot_step_size)
-        self.fig.show()
+        self.plot()
+        # plot_splines(self.points, gen_splines_xy(self.points, spline_generator=self.generator_func),
+        #              pyplot_axs=self.axs,
+        #              update=True, step=self.plot_step_size)
+        # self.fig.show()
 
         self.__init_widgets()
 
@@ -67,7 +81,9 @@ class AdjusterGui:
         # ==== Content configuration ====
 
         self.order_bool = tk.BooleanVar()
-        self.order_sel_check = tk.Checkbutton(self.root, text="5th order\nsplines", bg="white", variable=self.order_bool, command=self.update_order, bd=0, highlightthickness=0)
+        self.order_sel_check = tk.Checkbutton(self.root, text="5th order\nsplines", bg="white",
+                                              variable=self.order_bool, command=self.update_order, bd=0,
+                                              highlightthickness=0)
         self.order_sel_check.grid(column=0, row=1)
         self.order_bool.set(True)
 
@@ -82,33 +98,39 @@ class AdjusterGui:
         self.p1_pos_label = tk.Label(self.root, text="Position", bg="white")
         self.p1_pos_label.grid(column=0, row=point_off + 2, sticky=tk.SW, padx=5, pady=5)
         self.p1_pos_x_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p1_pos_x_scale.set(self.points[0][0]["pos"])
         self.p1_pos_x_scale.grid(column=1, row=point_off + 2, padx=5, pady=5)
         self.p1_pos_y_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p1_pos_y_scale.set(self.points[0][1]["pos"])
         self.p1_pos_y_scale.grid(column=2, row=point_off + 2, padx=5, pady=5)
 
         self.p1_vel_label = tk.Label(self.root, text="Velocity", bg="white")
         self.p1_vel_label.grid(column=0, row=point_off + 3, sticky=tk.SW, padx=5, pady=5)
         self.p1_vel_x_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p1_vel_x_scale.set(self.points[0][0]["vel"])
         self.p1_vel_x_scale.grid(column=1, row=point_off + 3, padx=5, pady=5)
         self.p1_vel_y_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p1_vel_y_scale.set(self.points[0][1]["vel"])
         self.p1_vel_y_scale.grid(column=2, row=point_off + 3, padx=5, pady=5)
 
         self.p1_acc_label = tk.Label(self.root, text="Acceleration", bg="white")
         self.p1_acc_label.grid(column=0, row=point_off + 4, sticky=tk.SW, padx=5, pady=5)
         self.p1_acc_x_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p1_acc_x_scale.set(self.points[0][0]["acc"])
         self.p1_acc_x_scale.grid(column=1, row=point_off + 4, padx=5, pady=5)
         self.p1_acc_y_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p1_acc_y_scale.set(self.points[0][1]["acc"])
         self.p1_acc_y_scale.grid(column=2, row=point_off + 4, padx=5, pady=5)
 
@@ -123,31 +145,37 @@ class AdjusterGui:
         self.p2_pos_label = tk.Label(self.root, text="Position", bg="white")
         self.p2_pos_label.grid(column=0, row=point_off + 2, sticky=tk.SW, padx=5, pady=5)
         self.p2_pos_x_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p2_pos_x_scale.set(self.points[1][0]["pos"])
         self.p2_pos_x_scale.grid(column=1, row=point_off + 2, padx=5, pady=5)
         self.p2_pos_y_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p2_pos_y_scale.set(self.points[1][1]["pos"])
         self.p2_pos_y_scale.grid(column=2, row=point_off + 2, padx=5, pady=5)
         self.p2_vel_label = tk.Label(self.root, text="Velocity", bg="white")
         self.p2_vel_label.grid(column=0, row=point_off + 3, sticky=tk.SW, padx=5, pady=5)
         self.p2_vel_x_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p2_vel_x_scale.set(self.points[1][0]["vel"])
         self.p2_vel_x_scale.grid(column=1, row=point_off + 3, padx=5, pady=5)
         self.p2_vel_y_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p2_vel_y_scale.set(self.points[1][1]["vel"])
         self.p2_vel_y_scale.grid(column=2, row=point_off + 3, padx=5, pady=5)
         self.p2_acc_label = tk.Label(self.root, text="Acceleration", bg="white")
         self.p2_acc_label.grid(column=0, row=point_off + 4, sticky=tk.SW, padx=5, pady=5)
         self.p2_acc_x_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p2_acc_x_scale.set(self.points[1][0]["acc"])
         self.p2_acc_x_scale.grid(column=1, row=point_off + 4, padx=5, pady=5)
         self.p2_acc_y_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p2_acc_y_scale.set(self.points[1][1]["acc"])
         self.p2_acc_y_scale.grid(column=2, row=point_off + 4, padx=5, pady=5)
 
@@ -162,33 +190,62 @@ class AdjusterGui:
         self.p3_pos_label = tk.Label(self.root, text="Position", bg="white")
         self.p3_pos_label.grid(column=0, row=point_off + 2, sticky=tk.SW, padx=5, pady=5)
         self.p3_pos_x_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p3_pos_x_scale.set(self.points[2][0]["pos"])
         self.p3_pos_x_scale.grid(column=1, row=point_off + 2, padx=5, pady=5)
         self.p3_pos_y_scale = tk.Scale(self.root, from_=self.__min_pos, to=self.__max_pos, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__pos_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__pos_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p3_pos_y_scale.set(self.points[2][1]["pos"])
         self.p3_pos_y_scale.grid(column=2, row=point_off + 2, padx=5, pady=5)
         self.p3_vel_label = tk.Label(self.root, text="Velocity", bg="white")
         self.p3_vel_label.grid(column=0, row=point_off + 3, sticky=tk.SW, padx=5, pady=5)
         self.p3_vel_x_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p3_vel_x_scale.set(self.points[2][0]["vel"])
         self.p3_vel_x_scale.grid(column=1, row=point_off + 3, padx=5, pady=5)
         self.p3_vel_y_scale = tk.Scale(self.root, from_=self.__min_vel, to=self.__max_vel, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__vel_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__vel_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p3_vel_y_scale.set(self.points[2][1]["vel"])
         self.p3_vel_y_scale.grid(column=2, row=point_off + 3, padx=5, pady=5)
         self.p3_acc_label = tk.Label(self.root, text="Acceleration", bg="white")
         self.p3_acc_label.grid(column=0, row=point_off + 4, sticky=tk.SW, padx=5, pady=5)
         self.p3_acc_x_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p3_acc_x_scale.set(self.points[2][0]["acc"])
         self.p3_acc_x_scale.grid(column=1, row=point_off + 4, padx=5, pady=5)
         self.p3_acc_y_scale = tk.Scale(self.root, from_=self.__min_acc, to=self.__max_acc, orient=tk.HORIZONTAL,
-                                       length=150, command=self.update_points, resolution=self.__acc_step_size, bg="white", bd=0, highlightthickness=0)
+                                       length=150, command=self.update_points, resolution=self.__acc_step_size,
+                                       bg="white", bd=0, highlightthickness=0)
         self.p3_acc_y_scale.set(self.points[2][1]["acc"])
         self.p3_acc_y_scale.grid(column=2, row=point_off + 4, padx=5, pady=5)
+
+        point_off = 3 * 5
+
+        self.p2_collision_label = tk.Label(self.root, text="Offset for collision trajectory", fg="black",
+                                           bg="lightgray")
+        self.p2_collision_label.grid(column=1, row=point_off, columnspan=2)
+
+        self.collision_bool = tk.BooleanVar()
+        self.collision_check = tk.Checkbutton(self.root, text="show collision\n alternative", bg="white",
+                                              variable=self.collision_bool, command=self.update_show_collision, bd=0,
+                                              highlightthickness=0)
+        self.collision_check.grid(column=0, row=point_off + 1)
+        self.collision_bool.set(self.show_collision)
+
+        self.p2_collision_scale = tk.Scale(self.root, from_=self.__min_collision_offset, to=self.__max_collision_offset,
+                                           resolution=self.__collision_step_size, length=150,
+                                           command=self.update_points, orient=tk.HORIZONTAL, bg="white", bd=0,
+                                           highlightthickness=0)
+        self.p2_collision_scale.set(self.__collision_offset)
+        self.p2_collision_scale.grid(column=1, row=point_off + 1, columnspan=2)
+
+    def get_collision_offset(self):
+        return self.p2_collision_scale.get()
 
     def get_pos_x_val(self, pt_nr):
         if pt_nr == 0:
@@ -243,18 +300,46 @@ class AdjusterGui:
         # print(f"Update order: {self.order_bool.get()}")
         self.update_points(None)
 
+    def update_show_collision(self):
+        self.show_collision = self.collision_bool.get()
+        self.update_points(None)
+
     def update_points(self, _):
-        for i, pt in enumerate(self.points):
-            pt[0]["pos"] = self.get_pos_x_val(i)
-            pt[0]["vel"] = self.get_vel_x_val(i)
-            pt[0]["acc"] = self.get_acc_x_val(i)
+        self.__collision_offset = self.get_collision_offset()
+
+        for i, (pt, cpt) in enumerate(zip(self.points, self.collision_points)):
+            pt[0]["pos"] = cpt[0]["pos"] = self.get_pos_x_val(i)
+            pt[0]["vel"] = cpt[0]["vel"] = self.get_vel_x_val(i)
+            pt[0]["acc"] = pt[0]["acc"] = self.get_acc_x_val(i)
+
             pt[1]["pos"] = self.get_pos_y_val(i)
-            pt[1]["vel"] = self.get_vel_y_val(i)
-            pt[1]["acc"] = self.get_acc_y_val(i)
+            cpt[1]["pos"] = pt[1]["pos"] + (self.__collision_offset if i == 1 else 0)
+
+            pt[1]["vel"] = pt[1]["vel"] = self.get_vel_y_val(i)
+            pt[1]["acc"] = pt[1]["acc"] = self.get_acc_y_val(i)
             # print(pt)
         # print(self.points)
-        plot_splines(self.points, gen_splines_xy(self.points, spline_generator=self.generator_func), pyplot_axs=self.axs,
-                     update=True, step=self.plot_step_size)
+        # plot_splines(self.points, gen_splines_xy(self.points, spline_generator=self.generator_func),
+        #              pyplot_axs=self.axs,
+        #              update=True, step=self.plot_step_size)
+        # self.fig.show()
+        self.plot()
+
+    def plot(self, update=True):
+        point_lst = []
+        plot_lst = []
+
+        plot_points_normal = generate_plot_data(self.points,
+                                                gen_splines_xy(self.points, spline_generator=self.generator_func),
+                                                step=self.plot_step_size)
+        plot_lst.append(plot_points_normal)
+        point_lst.append(self.points)
+        if self.show_collision:
+            plot_points_collision = generate_plot_data(self.points, gen_splines_xy(self.collision_points, spline_generator=self.generator_func), step=self.plot_step_size)
+            plot_lst.append(plot_points_collision)
+            point_lst.append(self.collision_points)
+
+        plot_from_plot_data(plot_lst, point_lst, self.axs, update=update)
         self.fig.show()
 
 
@@ -370,9 +455,9 @@ def setup_plot(axs):
     axs[2].set_title("Combined Splines in xy-plane")
 
 
-def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplot_axs=None, update=False):
+def generate_plot_data(point_param_lists: list, splines_xy_list=None, step=0.01):
     splines_xy = splines_xy_list
-    if not splines_xy_list:
+    if splines_xy_list is None:
         splines_xy = gen_splines_xy(point_param_lists)
 
     t = [np.arange(point_param_lists[i][0]["t"], point_param_lists[i + 1][0]["t"] + step, step) for i in
@@ -380,54 +465,60 @@ def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplo
     x_pts = [list(map(splines_xy[0], t_)) for t_ in t]
     y_pts = [list(map(splines_xy[1], t_)) for t_ in t]
 
+    return t, x_pts, y_pts
+
+
+def plot_from_plot_data(plot_data: list, point_parameter_lists: list, pyplot_axs=None, update=False):
     if pyplot_axs is None:  # or pyplot_axs.shape != (1, 3):
         fig, axs = plt.subplots(1, 3)
     else:
         axs = pyplot_axs
+
     if update:
         axs[0].clear()
-    axs[0].set_aspect(aspect="equal", adjustable='datalim')
+        axs[1].clear()
+        axs[2].clear()
 
+    axs[0].set_aspect(aspect="equal", adjustable='datalim')
     axs[0].set_xlabel("t")
     axs[0].set_ylabel("x")
     axs[0].set_title("Splines in x-direction over time")
 
-    # splines x
-    for ts, s in zip(t, x_pts):
-        axs[0].plot(ts, s)
-    # points x
-    for point in point_param_lists:
-        axs[0].plot(point[0]["t"], point[0]["pos"], "xk")
-
-    if update:
-        axs[1].clear()
     axs[1].set_aspect(aspect="equal", adjustable='datalim')
     axs[1].set_xlabel("t")
     axs[1].set_ylabel("y")
     axs[1].set_title("Splines in y-direction over time")
 
-
-    # splines x
-    for ts, s in zip(t, y_pts):
-        axs[1].plot(ts, s)
-    # points x
-    for point in point_param_lists:
-        axs[1].plot(point[1]["t"], point[1]["pos"], "xk")
-
-    if update:
-        axs[2].clear()
     axs[2].set_aspect(aspect="equal", adjustable='datalim')
     axs[2].set_xlabel("x")
     axs[2].set_ylabel("y")
     axs[2].set_title("Combined Splines in xy-plane")
 
+    for plot_points, point_param_lists in zip(plot_data, point_parameter_lists):
+        t, x_pts, y_pts = plot_points
 
-    for xs, ys in zip(x_pts, y_pts):
-        axs[2].plot(xs, ys)
-    for point in point_param_lists:
-        axs[2].plot(point[0]["pos"], point[1]["pos"], "xk")
+        # Plot X over t
+        for ts, s in zip(t, x_pts):
+            axs[0].plot(ts, s)
+        for point in point_param_lists:
+            axs[0].plot(point[0]["t"], point[0]["pos"], "xk")
 
-    # plt.pause(0.05)
+        # Plot Y over t
+        for ts, s in zip(t, y_pts):
+            axs[1].plot(ts, s)
+        for point in point_param_lists:
+            axs[1].plot(point[1]["t"], point[1]["pos"], "xk")
+
+        # Plot Y over X
+        for xs, ys in zip(x_pts, y_pts):
+            axs[2].plot(xs, ys)
+        for point in point_param_lists:
+            axs[2].plot(point[0]["pos"], point[1]["pos"], "xk")
+
+
+def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplot_axs=None, update=False):
+    plot_from_plot_data([generate_plot_data(point_param_lists, splines_xy_list, step)], [point_param_lists], pyplot_axs,
+                        update)
 
 
 def get_example_point_data() -> list:
