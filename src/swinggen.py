@@ -310,13 +310,13 @@ class AdjusterGui:
         for i, (pt, cpt) in enumerate(zip(self.points, self.collision_points)):
             pt[0]["pos"] = cpt[0]["pos"] = self.get_pos_x_val(i)
             pt[0]["vel"] = cpt[0]["vel"] = self.get_vel_x_val(i)
-            pt[0]["acc"] = pt[0]["acc"] = self.get_acc_x_val(i)
+            pt[0]["acc"] = cpt[0]["acc"] = self.get_acc_x_val(i)
 
             pt[1]["pos"] = self.get_pos_y_val(i)
             cpt[1]["pos"] = pt[1]["pos"] + (self.__collision_offset if i == 1 else 0)
 
-            pt[1]["vel"] = pt[1]["vel"] = self.get_vel_y_val(i)
-            pt[1]["acc"] = pt[1]["acc"] = self.get_acc_y_val(i)
+            pt[1]["vel"] = cpt[1]["vel"] = self.get_vel_y_val(i)
+            pt[1]["acc"] = cpt[1]["acc"] = self.get_acc_y_val(i)
             # print(pt)
         # print(self.points)
         # plot_splines(self.points, gen_splines_xy(self.points, spline_generator=self.generator_func),
