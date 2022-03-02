@@ -20,6 +20,9 @@ class Spline:
                 return self.__eval(val, coeffs)
         return None
 
+    def __repr__(self):
+        return f"Spline object over domain(s): {self.domains_lists} with coefficients: {self.coeff_lists}"
+
     def get_range(self):
         return np.min(self.domains_lists), np.max(self.domains_lists)
 
@@ -335,7 +338,9 @@ class AdjusterGui:
         plot_lst.append(plot_points_normal)
         point_lst.append(self.points)
         if self.show_collision:
-            plot_points_collision = generate_plot_data(self.points, gen_splines_xy(self.collision_points, spline_generator=self.generator_func), step=self.plot_step_size)
+            plot_points_collision = generate_plot_data(self.points, gen_splines_xy(self.collision_points,
+                                                                                   spline_generator=self.generator_func),
+                                                       step=self.plot_step_size)
             plot_lst.append(plot_points_collision)
             point_lst.append(self.collision_points)
 
@@ -435,6 +440,14 @@ def gen_splines_xy(point_param_lists: list, spline_generator=gen_spline_3) -> li
     return [spline_generator(points_x), spline_generator(points_y)]
 
 
+def gen_splines_xyz(point_param_lists: list, spline_generator=gen_spline_3) -> list:
+    points_x = [p[0] for p in point_param_lists]
+    points_y = [p[1] for p in point_param_lists]
+    points_z = [p[2] for p in point_param_lists]
+
+    return [spline_generator(points_x), spline_generator(points_y), spline_generator(points_z)]
+
+
 def setup_plot(axs):
     axs[0].set_aspect(aspect="equal", adjustable='datalim')
 
@@ -527,13 +540,27 @@ def get_example_point_data() -> list:
             [{"t": 1.0, "pos": 1, "vel": -5, "acc": -0.25}, {"t": 1, "pos": 0, "vel": -0.25, "acc": 0.1}]]
 
 
+def get_example_point_data_3D() -> list:
+    return [[{"t": 0, "pos": -1, "vel": -5, "acc": 10}, {"t": 0, "pos": 0, "vel": 0.1, "acc": 0.1},
+             {"t": 0, "pos": 0, "vel": -0.01, "acc": -0.01}],
+            [{"t": 0.5, "pos": 0, "vel": 20, "acc": 0}, {"t": 0.5, "pos": 1, "vel": 0, "acc": -2},
+             {"t": 0.5, "pos": 0.1, "vel": 0, "acc": 0.1}],
+            [{"t": 1.0, "pos": 1, "vel": -5, "acc": -0.25}, {"t": 1, "pos": 0, "vel": -0.25, "acc": 0.1},
+             {"t": 1, "pos": 0, "vel": 0.01, "acc": 0.01}]]
+
+
 if __name__ == "__main__":
     # ex_points = get_example_point_data()
     # fig, axs = plt.subplots(1, 3)
     # plot_splines(ex_points, pyplot_axs=axs)
     # plot_splines(ex_points, gen_splines_xy(ex_points, spline_generator=gen_spline_5), pyplot_axs=axs)
     # plt.show()
-    win_tk = AdjusterGui()
+    # win_tk = AdjusterGui()
+
+    # splines_3D = gen_splines_xyz(get_example_point_data_3D(), gen_spline_5)
+    # print(splines_3D[0])
+    # print(splines_3D[1])
+    # print(splines_3D[2])
 
 # TODO
 # Make scaling on axes the same
