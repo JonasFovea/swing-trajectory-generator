@@ -555,7 +555,7 @@ if __name__ == "__main__":
     # plot_splines(ex_points, pyplot_axs=axs)
     # plot_splines(ex_points, gen_splines_xy(ex_points, spline_generator=gen_spline_5), pyplot_axs=axs)
     # plt.show()
-    # win_tk = AdjusterGui()
+    win_tk = AdjusterGui()
 
     # splines_3D = gen_splines_xyz(get_example_point_data_3D(), gen_spline_5)
     # print(splines_3D[0])
