@@ -351,6 +351,58 @@ class AdjusterGui:
 # =================== END CLASSES     ===============================================
 # =================== START FUNCTIONS ===============================================
 
+def gen_spline_auto(point_params: list, verbose=False) -> list:
+    if len(point_params) < 2:
+        raise AttributeError("Not enough points provided")
+    if verbose:
+        print(f"Generating splines for points {point_params}")
+
+    # tstart = time.perf_counter()
+    spline_coefficients = []
+    spline_domains = []
+    for i, _ in enumerate(point_params[:-1]):
+        t = [point_params[i + j]["t"] for j in (0, 1)]
+
+        pos = [point_params[i + j]["pos"] if "pos" in point_params[i+j] else None for j in (0, 1)]
+        vel = [point_params[i + j]["vel"] if "vel" in point_params[i+j] else None for j in (0, 1)]
+        acc = [point_params[i + j]["acc"] if "acc" in point_params[i+j] else None for j in (0, 1)]
+
+        # print(f"Using values: pos: {pos}, vel: {vel}, acc: {acc}")
+
+        A = np.array([
+            [t[0] ** 5, t[0] ** 4, t[0] ** 3, t[0] ** 2, t[0], 1],
+            [t[1] ** 5, t[1] ** 4, t[1] ** 3, t[1] ** 2, t[1], 1],
+            [5 * t[0] ** 4, 4 * t[0] ** 3, 3 * t[0] ** 2, 2 * t[0], 1, 0],
+            [5 * t[1] ** 4, 4 * t[1] ** 3, 3 * t[1] ** 2, 2 * t[1], 1, 0],
+            [20 * t[0] ** 3, 12 * t[0] ** 2, 6 * t[0], 2, 0, 0],
+            [20 * t[1] ** 3, 12 * t[1] ** 2, 6 * t[1], 2, 0, 0]])
+
+        b = np.array([pos[0], pos[1], vel[0], vel[1], acc[0], acc[1]], dtype=float)
+        remove_ctr = 0
+
+        for idx, val in enumerate(b):
+
+            if np.isnan(val):
+                # print(A, b)
+                A = np.delete(A, 0, 1) # erste Spalte von A entfernen
+                A = np.delete(A, idx-remove_ctr, 0) # Zeile aus A entfernen
+                b = np.delete(b, idx-remove_ctr, 0) # Element aus b entfernen
+                remove_ctr += 1
+                if verbose:
+                    print(f"Missing entry, reducing polynomial degree")
+                # print(A, b)
+
+        coeffs = np.linalg.solve(A, b)
+        if verbose:
+            print(f"Solving the following System A*x=b : \nA: {A}\nb: {b}")
+            print(f"Coefficients: {coeffs}")
+        spline_coefficients.append(coeffs)
+        spline_domains.append(t)
+    # tend = time.perf_counter()
+    # print(f"Time passed while calculating splines for one dimension: {tend-tstart}")
+    return Spline(spline_coefficients, spline_domains)
+
+
 def gen_spline_5(point_params: list, verbose=False) -> list:
     if len(point_params) < 2:
         raise AttributeError("Not enough points provided")
@@ -556,6 +608,15 @@ if __name__ == "__main__":
     # plot_splines(ex_points, gen_splines_xy(ex_points, spline_generator=gen_spline_5), pyplot_axs=axs)
     # plt.show()
     win_tk = AdjusterGui()
+
+    # data = get_example_point_data_3D()
+    # del data[0][0]["vel"]
+    # del data[1][0]["vel"]
+    # print(data)
+    # points_x = [p[0] for p in data]
+    # points_y = [p[1] for p in data]
+    # points_z = [p[2] for p in data]
+    # gen_spline_auto(points_x)
 
     # splines_3D = gen_splines_xyz(get_example_point_data_3D(), gen_spline_5)
     # print(splines_3D[0])
