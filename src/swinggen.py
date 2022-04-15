@@ -65,7 +65,7 @@ class AdjusterGui:
         self.collision_points = copy.deepcopy(self.points)
         self.collision_points[1][1]["pos"] += 1
 
-        self.generator_func = gen_spline_5
+        self.generator_func = gen_poly_5
 
         plt.ion()
         self.fig, self.axs = plt.subplots(1, 3)
@@ -299,7 +299,7 @@ class AdjusterGui:
             return self.p3_acc_y_scale.get()
 
     def update_order(self):
-        self.generator_func = gen_spline_5 if self.order_bool.get() else gen_spline_3
+        self.generator_func = gen_poly_5 if self.order_bool.get() else gen_poly_3
         # print(f"Update order: {self.order_bool.get()}")
         self.update_points(None)
 
@@ -333,13 +333,13 @@ class AdjusterGui:
         plot_lst = []
 
         plot_points_normal = generate_plot_data(self.points,
-                                                gen_splines_xy(self.points, spline_generator=self.generator_func),
+                                                gen_poly_xy(self.points, poly_generator=self.generator_func),
                                                 step=self.plot_step_size)
         plot_lst.append(plot_points_normal)
         point_lst.append(self.points)
         if self.show_collision:
-            plot_points_collision = generate_plot_data(self.points, gen_splines_xy(self.collision_points,
-                                                                                   spline_generator=self.generator_func),
+            plot_points_collision = generate_plot_data(self.points, gen_poly_xy(self.collision_points,
+                                                                                   poly_generator=self.generator_func),
                                                        step=self.plot_step_size)
             plot_lst.append(plot_points_collision)
             point_lst.append(self.collision_points)
@@ -351,15 +351,15 @@ class AdjusterGui:
 # =================== END CLASSES     ===============================================
 # =================== START FUNCTIONS ===============================================
 
-def gen_spline_auto(point_params: list, verbose=False) -> list:
+def gen_poly_auto(point_params: list, verbose=False) -> list:
     if len(point_params) < 2:
         raise AttributeError("Not enough points provided")
     if verbose:
-        print(f"Generating splines for points {point_params}")
+        print(f"Generating polynomials for points {point_params}")
 
     # tstart = time.perf_counter()
-    spline_coefficients = []
-    spline_domains = []
+    poly_coefficients = []
+    poly_domains = []
     for i, _ in enumerate(point_params[:-1]):
         t = [point_params[i + j]["t"] for j in (0, 1)]
 
@@ -396,22 +396,22 @@ def gen_spline_auto(point_params: list, verbose=False) -> list:
         if verbose:
             print(f"Solving the following System A*x=b : \nA: {A}\nb: {b}")
             print(f"Coefficients: {coeffs}")
-        spline_coefficients.append(coeffs)
-        spline_domains.append(t)
+        poly_coefficients.append(coeffs)
+        poly_domains.append(t)
     # tend = time.perf_counter()
     # print(f"Time passed while calculating splines for one dimension: {tend-tstart}")
-    return Spline(spline_coefficients, spline_domains)
+    return Spline(poly_coefficients, poly_domains)
 
 
-def gen_spline_5(point_params: list, verbose=False) -> list:
+def gen_poly_5(point_params: list, verbose=False) -> list:
     if len(point_params) < 2:
         raise AttributeError("Not enough points provided")
     if verbose:
         print(f"Generating splines for points {point_params}")
 
     # tstart = time.perf_counter()
-    spline_coefficients = []
-    spline_domains = []
+    poly_coefficients = []
+    poly_domains = []
     for i, _ in enumerate(point_params[:-1]):
         t = [point_params[i + j]["t"] for j in (0, 1)]
 
@@ -437,22 +437,22 @@ def gen_spline_5(point_params: list, verbose=False) -> list:
         # spline = lambda t, koeffs=koeffs: koeffs[0] * t ** 5 + koeffs[1] * t ** 4 + koeffs[2] * t ** 3 + koeffs[
         #     3] * t ** 2 + koeffs[
         #                                       4] * t + koeffs[5]
-        spline_coefficients.append(coeffs)
-        spline_domains.append(t)
+        poly_coefficients.append(coeffs)
+        poly_domains.append(t)
     # tend = time.perf_counter()
     # print(f"Time passed while calculating splines for one dimension: {tend-tstart}")
-    return Spline(spline_coefficients, spline_domains)
+    return Spline(poly_coefficients, poly_domains)
 
 
-def gen_spline_3(point_params: list, verbose=False) -> Spline:
+def gen_poly_3(point_params: list, verbose=False) -> Spline:
     if len(point_params) < 2:
         raise AttributeError("Not enough points provided")
     if verbose:
         print(f"Generating spline_coefficients for points {point_params}")
 
     # tstart = time.perf_counter()
-    spline_coefficients = []
-    spline_domains = []
+    poly_coefficients = []
+    poly_domains = []
     for i, _ in enumerate(point_params[:-1]):
         t = [point_params[i + j]["t"] for j in (0, 1)]
 
@@ -474,30 +474,30 @@ def gen_spline_3(point_params: list, verbose=False) -> Spline:
             print(f"Coefficients: {coeffs}")
         # spline = lambda t, koeffs=koeffs: koeffs[0] * t ** 3 + koeffs[1] * t ** 2 + koeffs[2] * t + koeffs[3]
         # spline_coefficients.append(spline)
-        spline_coefficients.append(coeffs)
-        spline_domains.append(t)
+        poly_coefficients.append(coeffs)
+        poly_domains.append(t)
 
     # tend = time.perf_counter()
     # print(f"Time passed while calculating spline_coefficients for one dimension: {tend-tstart}")
-    return Spline(spline_coefficients, spline_domains)
+    return Spline(poly_coefficients, poly_domains)
 
 
-def gen_splines_xy(point_param_lists: list, spline_generator=gen_spline_3) -> list:
+def gen_poly_xy(point_param_lists: list, poly_generator=gen_poly_3) -> list:
     # tstart = time.perf_counter_ns()
     points_x = [p[0] for p in point_param_lists]
     points_y = [p[1] for p in point_param_lists]
     # tend = time.perf_counter_ns()
     # print(f"Time Passed for calculationd 2D splines: {tend-tstart}ns")
 
-    return [spline_generator(points_x), spline_generator(points_y)]
+    return [poly_generator(points_x), poly_generator(points_y)]
 
 
-def gen_splines_xyz(point_param_lists: list, spline_generator=gen_spline_3) -> list:
+def gen_poly_xyz(point_param_lists: list, poly_generator=gen_poly_3) -> list:
     points_x = [p[0] for p in point_param_lists]
     points_y = [p[1] for p in point_param_lists]
     points_z = [p[2] for p in point_param_lists]
 
-    return [spline_generator(points_x), spline_generator(points_y), spline_generator(points_z)]
+    return [poly_generator(points_x), poly_generator(points_y), poly(points_z)]
 
 
 def setup_plot(axs):
@@ -520,15 +520,15 @@ def setup_plot(axs):
     axs[2].set_title("Combined Splines in xy-plane")
 
 
-def generate_plot_data(point_param_lists: list, splines_xy_list=None, step=0.01):
-    splines_xy = splines_xy_list
-    if splines_xy_list is None:
-        splines_xy = gen_splines_xy(point_param_lists)
+def generate_plot_data(point_param_lists: list, poly_xy_list=None, step=0.01):
+    poly_xy = poly_xy_list
+    if poly_xy_list is None:
+        poly_xy = gen_poly_xy(point_param_lists)
 
     t = [np.arange(point_param_lists[i][0]["t"], point_param_lists[i + 1][0]["t"] + step, step) for i in
          range(len(point_param_lists) - 1)]
-    x_pts = [list(map(splines_xy[0], t_)) for t_ in t]
-    y_pts = [list(map(splines_xy[1], t_)) for t_ in t]
+    x_pts = [list(map(poly_xy[0], t_)) for t_ in t]
+    y_pts = [list(map(poly_xy[1], t_)) for t_ in t]
 
     return t, x_pts, y_pts
 
@@ -581,8 +581,8 @@ def plot_from_plot_data(plot_data: list, point_parameter_lists: list, pyplot_axs
             axs[2].plot(point[0]["pos"], point[1]["pos"], "xk")
 
 
-def plot_splines(point_param_lists: list, splines_xy_list=None, step=0.01, pyplot_axs=None, update=False):
-    plot_from_plot_data([generate_plot_data(point_param_lists, splines_xy_list, step)], [point_param_lists], pyplot_axs,
+def plot_poly(point_param_lists: list, poly_xy_list=None, step=0.01, pyplot_axs=None, update=False):
+    plot_from_plot_data([generate_plot_data(point_param_lists, poly_xy_list, step)], [point_param_lists], pyplot_axs,
                         update)
 
 
