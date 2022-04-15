@@ -339,7 +339,7 @@ class AdjusterGui:
         point_lst.append(self.points)
         if self.show_collision:
             plot_points_collision = generate_plot_data(self.points, gen_poly_xy(self.collision_points,
-                                                                                   poly_generator=self.generator_func),
+                                                                                poly_generator=self.generator_func),
                                                        step=self.plot_step_size)
             plot_lst.append(plot_points_collision)
             point_lst.append(self.collision_points)
@@ -350,6 +350,42 @@ class AdjusterGui:
 
 # =================== END CLASSES     ===============================================
 # =================== START FUNCTIONS ===============================================
+
+def gen_spline(point_params: list, verbose=False) -> list:
+    if len(point_params) != 3:
+        raise AttributeError("Not provided 3 point.")
+    if verbose:
+        print(f"Generating splines for points {point_params}")
+
+    t = [point["t"] for point in point_params]
+    pos = [point["pos"] for point in point_params]
+    vel = [point_params[0]["vel"], point_params[2]["vel"]]
+    acc = [point_params[0]["acc"], point_params[2]["acc"]]
+
+    A = np.array([
+        [t[0] ** 4, t[0] ** 3, t[0] ** 2, t[0], 1, 0, 0, 0, 0, 0],
+        [4 * t[0] ** 3, 3 * t[0] ** 2, 2 * t[0], 1, 0, 0, 0, 0, 0, 0],
+        [12 * t[0] ** 2, 6 * t[0], 2, 0, 0, 0, 0, 0, 0, 0],
+        [t[1] ** 4, t[1] ** 3, t[1] ** 2, t[1], 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, t[1] ** 4, t[1] ** 3, t[1] ** 2, t[1], 1],
+        [0, 0, 0, 0, 0, t[2] ** 4, t[2] ** 3, t[2] ** 2, t[2], 1],
+        [0, 0, 0, 0, 0, 4 * t[2] ** 3, 3 * t[2] ** 2, 2 * t[2], 1, 0],
+        [0, 0, 0, 0, 0, 12 * t[2] ** 2, 6 * t[2], 2, 0, 0],
+        [4 * t[1] ** 3, 3 * t[1] ** 2, 2 * t[1], 1, 0, -4 * t[1] ** 3, -3 * t[1] ** 2, -2 * t[1], 1, 0],
+        [12 * t[1] ** 2, 6 * t[1], 2, 0, 0, -12 * t[1] ** 2, -6 * t[1], 2, 0, 0]
+    ])
+
+    b = np.array([pos[0], vel[0], acc[0], pos[1], pos[1], pos[2], vel[2], acc[2], 0, 0])
+    coeffs = np.linalg.solve(A, b)
+
+    spline_coefficients = [coeffs[:5], coeffs[5:]]
+    spline_domains = [t[:2], t[1:]]
+    if verbose:
+        print(f"Solving the following System A*x=b : \nA: {A}\nb: {b}")
+        print(f"Coefficients: {coeffs}")
+
+    return Spline(spline_coefficients, spline_domains)
+
 
 def gen_poly_auto(point_params: list, verbose=False) -> list:
     if len(point_params) < 2:
@@ -363,9 +399,9 @@ def gen_poly_auto(point_params: list, verbose=False) -> list:
     for i, _ in enumerate(point_params[:-1]):
         t = [point_params[i + j]["t"] for j in (0, 1)]
 
-        pos = [point_params[i + j]["pos"] if "pos" in point_params[i+j] else None for j in (0, 1)]
-        vel = [point_params[i + j]["vel"] if "vel" in point_params[i+j] else None for j in (0, 1)]
-        acc = [point_params[i + j]["acc"] if "acc" in point_params[i+j] else None for j in (0, 1)]
+        pos = [point_params[i + j]["pos"] if "pos" in point_params[i + j] else None for j in (0, 1)]
+        vel = [point_params[i + j]["vel"] if "vel" in point_params[i + j] else None for j in (0, 1)]
+        acc = [point_params[i + j]["acc"] if "acc" in point_params[i + j] else None for j in (0, 1)]
 
         # print(f"Using values: pos: {pos}, vel: {vel}, acc: {acc}")
 
@@ -384,9 +420,9 @@ def gen_poly_auto(point_params: list, verbose=False) -> list:
 
             if np.isnan(val):
                 # print(A, b)
-                A = np.delete(A, 0, 1) # erste Spalte von A entfernen
-                A = np.delete(A, idx-remove_ctr, 0) # Zeile aus A entfernen
-                b = np.delete(b, idx-remove_ctr, 0) # Element aus b entfernen
+                A = np.delete(A, 0, 1)  # erste Spalte von A entfernen
+                A = np.delete(A, idx - remove_ctr, 0)  # Zeile aus A entfernen
+                b = np.delete(b, idx - remove_ctr, 0)  # Element aus b entfernen
                 remove_ctr += 1
                 if verbose:
                     print(f"Missing entry, reducing polynomial degree")
