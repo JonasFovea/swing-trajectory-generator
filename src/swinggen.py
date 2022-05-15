@@ -535,7 +535,7 @@ def gen_xyz(point_param_lists: list, generator=gen_poly_3) -> list:
     points_y = [p[1] for p in point_param_lists]
     points_z = [p[2] for p in point_param_lists]
 
-    return [generator(points_x), generator(points_y), poly(points_z)]
+    return [generator(points_x), generator(points_y), generator(points_z)]
 
 
 def setup_plot(axs):
@@ -551,7 +551,7 @@ def setup_plot(axs):
     axs[1].set_ylabel("y")
     axs[1].set_title("Splines in y-direction over time")
 
-    xs[2].set_aspect(aspect="equal", adjustable='datalim')
+    axs[2].set_aspect(aspect="equal", adjustable='datalim')
 
     axs[2].set_xlabel("x")
     axs[2].set_ylabel("y")
