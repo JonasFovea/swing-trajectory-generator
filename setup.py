@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='swinggen',
-    version='0.1.1',
+    version='0.1.2',
     description='',
     py_modules=['swinggen'],
     package_dir={'': 'src'},
