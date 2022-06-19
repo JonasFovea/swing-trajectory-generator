@@ -8,12 +8,27 @@ import tkinter as tk
 
 
 class Spline:
+    """
+    Class to define and evaluate a splined function.
+    Function defined by different polynomials over given domains.
+    """
+
     def __init__(self, coefficient_lists, domain_lists):
+        """
+        Initialize Spline Objects
+        @param coefficient_lists: lists of polynomial coefficients, the highest order first
+        @param domain_lists: lists of domains for each coefficient list
+        """
         self.coeff_lists = [clist[::-1] for clist in coefficient_lists]
         self.domains_lists = domain_lists
         # print(f"Generated spline with coeficcients (a0->an): {self.coeff_lists} over the domains: {self.domains_lists} ")
 
     def __call__(self, val):
+        """
+        Method to evaluate the spline
+        @param val: Value to evaluate the spline at
+        @return: Spline value at given value
+        """
         for dom, coeffs in zip(self.domains_lists, self.coeff_lists):
             if dom[0] <= val <= dom[1]:
                 # print(f"Evaluating spline for {val} in domain between {dom[0]} and {dom[1]}")
@@ -21,17 +36,34 @@ class Spline:
         return None
 
     def __repr__(self):
+        """
+        Representation of the spline object
+        """
         return f"Spline object over domain(s): {self.domains_lists} with coefficients: {self.coeff_lists}"
 
     def get_range(self):
+        """
+        Method to get the range, for which the spline is defined
+        @return: Range tuple
+        """
         return np.min(self.domains_lists), np.max(self.domains_lists)
 
     @staticmethod
     def __eval(val, coeffs):
+        """
+        Static method to evaluate any polynomial, defined by the given coefficients at the given value
+        @param val: Value to evaluate at
+        @param coeffs: Polynomial coefficients
+        @return: Evaluaed value
+        """
         return sum([c * val ** i for i, c in enumerate(coeffs)])
 
 
 class AdjusterGui:
+    """
+    GUI class to experiment with different parameters of the trajectory points.
+    """
+
     def __init__(self, point_param_lists: list = None):
 
         # Main Window configuration
@@ -351,7 +383,15 @@ class AdjusterGui:
 # =================== END CLASSES     ===============================================
 # =================== START FUNCTIONS ===============================================
 
-def gen_spline(point_params: list, verbose=False) -> list:
+def gen_spline(point_params: list, verbose=False) -> Spline:
+    """
+    Function to generate a spline defined by given point parameters.
+    @param point_params: list of point parameters (dictionaries with values for time, position[, velocity, acceleration])
+    @param verbose: Enable verbose output if True
+    @return: Calculated spline object
+    """
+
+
     if len(point_params) != 3:
         raise AttributeError("Not provided 3 point.")
     if verbose:
@@ -389,7 +429,15 @@ def gen_spline(point_params: list, verbose=False) -> list:
     return sp
 
 
-def gen_poly_auto(point_params: list, verbose=False) -> list:
+def gen_poly_auto(point_params: list, verbose=False) -> Spline:
+    """
+        Function to generate a function defined by given point parameters, interpolated by polynomials.
+        Order of polynomials defined by given number of information.
+        @param point_params: list of point parameters (dictionaries with values for time, position[, velocity, acceleration])
+        @param verbose: Enable verbose output if True
+        @return: Calculated spline object
+    """
+
     if len(point_params) < 2:
         raise AttributeError("Not enough points provided")
     if verbose:
@@ -441,7 +489,14 @@ def gen_poly_auto(point_params: list, verbose=False) -> list:
     return Spline(poly_coefficients, poly_domains)
 
 
-def gen_poly_5(point_params: list, verbose=False) -> list:
+def gen_poly_5(point_params: list, verbose=False) -> Spline:
+    """
+        Function to generate a function defined by given point parameters, interpolated by fifth order polynomials.
+        @param point_params: list of point parameters (dictionaries with values for time, position[, velocity, acceleration])
+        @param verbose: Enable verbose output if True
+        @return: Calculated spline object
+    """
+
     if len(point_params) < 2:
         raise AttributeError("Not enough points provided")
     if verbose:
@@ -483,6 +538,13 @@ def gen_poly_5(point_params: list, verbose=False) -> list:
 
 
 def gen_poly_3(point_params: list, verbose=False) -> Spline:
+    """
+        Function to generate a function defined by given point parameters, interpolated by third order polynomials.
+        @param point_params: list of point parameters (dictionaries with values for time, position[, velocity, acceleration])
+        @param verbose: Enable verbose output if True
+        @return: Calculated spline object
+    """
+
     if len(point_params) < 2:
         raise AttributeError("Not enough points provided")
     if verbose:
@@ -521,6 +583,13 @@ def gen_poly_3(point_params: list, verbose=False) -> Spline:
 
 
 def gen_xy(point_param_lists: list, generator=gen_poly_3) -> list:
+    """
+    Function to generate two (spline) functions in two dimensions.
+    Each point is given as a list of two parameter dictionaries.
+    @param point_param_lists: list of point parameter lists
+    @param generator: generator function, which is used to generate the function
+    @return: list of Spline objects, one for each dimension
+    """
     # tstart = time.perf_counter_ns()
     points_x = [p[0] for p in point_param_lists]
     points_y = [p[1] for p in point_param_lists]
@@ -531,6 +600,13 @@ def gen_xy(point_param_lists: list, generator=gen_poly_3) -> list:
 
 
 def gen_xyz(point_param_lists: list, generator=gen_poly_3) -> list:
+    """
+    Function to generate three (spline) functions in two dimensions.
+    Each point is given as a list of two parameter dictionaries.
+    @param point_param_lists: list of point parameter lists
+    @param generator: generator function, which is used to generate the function
+    @return: list of Spline objects, one for each dimension
+    """
     points_x = [p[0] for p in point_param_lists]
     points_y = [p[1] for p in point_param_lists]
     points_z = [p[2] for p in point_param_lists]
@@ -539,6 +615,10 @@ def gen_xyz(point_param_lists: list, generator=gen_poly_3) -> list:
 
 
 def setup_plot(axs):
+    """
+    Function to set up three matplotlib plot axis
+    @param axs: list of axis
+    """
     axs[0].set_aspect(aspect="equal", adjustable='datalim')
 
     axs[0].set_xlabel("t")
@@ -559,6 +639,13 @@ def setup_plot(axs):
 
 
 def generate_plot_data(point_param_lists: list, poly_xy_list=None, step=0.01):
+    """
+    Function to generate data for plotting a 2D trajectory.
+    @param point_param_lists: list of point parameters
+    @param poly_xy_list: list of spline objects
+    @param step: time resolution for the plot
+    @return: time values, x values, y values
+    """
     poly_xy = poly_xy_list
     if poly_xy_list is None:
         poly_xy = gen_xy(point_param_lists)
@@ -572,6 +659,14 @@ def generate_plot_data(point_param_lists: list, poly_xy_list=None, step=0.01):
 
 
 def plot_from_plot_data(plot_data: list, point_parameter_lists: list, pyplot_axs=None, update=False):
+    """
+    Function to plot a 2D trajectory from point parameter values
+    @param plot_data: lists of time, x values, y values
+    @param point_parameter_lists: list of point parameters
+    @param pyplot_axs: axis to plot on
+    @param update: enable clearing of axis
+    """
+
     if pyplot_axs is None:  # or pyplot_axs.shape != (1, 3):
         fig, axs = plt.subplots(1, 3)
     else:
@@ -620,17 +715,33 @@ def plot_from_plot_data(plot_data: list, point_parameter_lists: list, pyplot_axs
 
 
 def plot(point_param_lists: list, poly_xy_list=None, step=0.01, pyplot_axs=None, update=False):
+    """
+    Function to combine the function call of plot_from_plot_data and generate_plot_data to plot a 2 trajectory
+    @param point_param_lists: point parameter list
+    @param poly_xy_list: list of Spline objects
+    @param step: time resolution for plot
+    @param pyplot_axs: axis to plot on
+    @param update: enable clearing of axis
+    """
     plot_from_plot_data([generate_plot_data(point_param_lists, poly_xy_list, step)], [point_param_lists], pyplot_axs,
                         update)
 
 
 def get_example_point_data() -> list:
+    """
+    Function to generate three example points for two dimensions
+    @return: point parameter list
+    """
     return [[{"t": 0, "pos": -1, "vel": -5, "acc": 10}, {"t": 0, "pos": 0, "vel": 0.1, "acc": 0.1}],
             [{"t": 0.5, "pos": 0, "vel": 20, "acc": 0}, {"t": 0.5, "pos": 1, "vel": 0, "acc": -2}],
             [{"t": 1.0, "pos": 1, "vel": -5, "acc": -0.25}, {"t": 1, "pos": 0, "vel": -0.25, "acc": 0.1}]]
 
 
 def get_example_point_data_3D() -> list:
+    """
+    Function to generate three example points for three dimensions
+    @return: point parameter list
+    """
     return [[{"t": 0, "pos": -1, "vel": -5, "acc": 10}, {"t": 0, "pos": 0, "vel": 0.1, "acc": 0.1},
              {"t": 0, "pos": 0, "vel": -0.01, "acc": -0.01}],
             [{"t": 0.5, "pos": 0, "vel": 20, "acc": 0}, {"t": 0.5, "pos": 1, "vel": 0, "acc": -2},
